@@ -1,16 +1,11 @@
 services:
   traefik:
-    image: "traefik:v3.0"
+    image: "traefik:v2.9"
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
-      # - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.watch=true" # Correct here
       - "--entrypoints.web.address=:80"
       - "--metrics.prometheus=true"
-      - "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0"
-      - "--metrics.prometheus.addEntryPointsLabels=true"
-      - "--metrics.prometheus.addServicesLabels=true"
     ports:
       - "80:80"
       - "8080:8080"
@@ -19,7 +14,7 @@ services:
     # labels:
     #   - "traefik.http.routers.api.rule=Host(`instak.cfpt.info`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
     networks:
-      - instak.cfpt.info
+      - internal-network
 
   api:
     build: ./api
@@ -30,7 +25,9 @@ services:
     volumes:
       - ./api/src:/var/www/html
     networks:
-      - instak.cfpt.info
+      - internal-network
+    depends_on:
+      - traefik
 
   public:
     build: ./public
@@ -41,7 +38,9 @@ services:
       - "traefik.http.routers.whoami.rule=Host(`instak.cfpt.info`)"
       - "traefik.http.routers.whoami.entrypoints=web"
     networks:
-      - instak.cfpt.info
+      - internal-network
+    depends_on:
+      - traefik
 
   mongo:
     image: mongo
@@ -56,7 +55,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: admin
       MONGO_INITDB_DATABASE: instacfpt
     networks:
-      - instak.cfpt.info
+      - internal-network
 
   mongo-express:
     image: mongo-express
@@ -68,7 +67,7 @@ services:
       ME_CONFIG_BASICAUTH_PASSWORD: admin
       ME_CONFIG_MONGODB_URL: mongodb://admin:admin@mongo:27017/
     networks:
-      - instak.cfpt.info
+      - internal-network
 
   node-exporter:
     image: quay.io/prometheus/node-exporter:latest
@@ -81,7 +80,7 @@ services:
     volumes:
       - '/:/host:ro,rslave'
     networks:
-      - instak.cfpt.info
+      - internal-network
 
   mongo-exporter:
     image: percona/mongodb_exporter:0.39.0
@@ -94,7 +93,7 @@ services:
       - "--collect-all"
       - "--compatible-mode"
     networks:
-      - instak.cfpt.info
+      - internal-network
 
   prometheus:
     image: prom/prometheus:latest
@@ -106,7 +105,7 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yaml'
     networks:
-      - instak.cfpt.info
+      - internal-network
 
   grafana:
     image: grafana/grafana:latest
@@ -116,7 +115,7 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana
     networks:
-      - instak.cfpt.info
+      - internal-network
 
 volumes:
   grafana-data:
@@ -124,5 +123,5 @@ volumes:
 
 
 networks:
-  instak.cfpt.info:
+  internal-network:
     driver: bridge
