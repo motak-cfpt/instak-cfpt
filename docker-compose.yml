@@ -1,9 +1,7 @@
 services:
   traefik:
     image: "traefik:v2.9"
-    command:
-        command: 
-        # --api --providers.docker --accesslog --api.insecure=true # Enables the web UI and tells Traefik to listen to docker
+    command: # command: --api --providers.docker --accesslog --api.insecure=true # Enables the web UI and tells Traefik to listen to docker
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--entrypoints.web.address=:80"
